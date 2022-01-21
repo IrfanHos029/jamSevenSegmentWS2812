@@ -1,13 +1,7 @@
-//#define BLYNK_PRINT Serial
 
 #include <Adafruit_NeoPixel.h>
-//#include <Blynk.h>
-//#include <NTPClient.h>
 #include "RTClib.h"
 #include <Wire.h>
-//#include <WiFiUdp.h>
-//#include <BlynkSimpleEsp8266.h>
-//#include <EEPROM.h>
 
 #define PinLed D5
 #define LEDS_PER_SEG 5
@@ -18,38 +12,24 @@
 
 unsigned long tmrsave=0;
 unsigned long tmrsaveHue=0;
-unsigned long tmrWarning=0;
 int delayWarning(200);
 int delayHue(2);
 int Delay(500);
-int r,g,b,Dots;
-int rD,gD,bD;
-int brightnes = 0;
+int brightnes = 200;
 bool dotsOn = false;
-bool warningWIFI = false;
-bool valueModeColor=false;
 int hl;
 int hr;
 int ml;
 int mr;
-int tl;
-int tr;
-int Vtemp;
-int HReset,MReset,SReset;
-byte ModeRestart=0;
-int ValueDisplayD =0;
-char auth[] = "MDiv0_KOlQFRLMGkbZ5S7sWJyYlxdEog";
-char ssid[] = "IrfanRetmi";
-char pass[] = "00002222";
-//int ValuePASS;
+
 static int hue;
 int pixelColor;
-int lastConnectionAttempt = millis();
-int connectionDelay = 5000; // try to reconnect every 5 seconds
+
 
 Adafruit_NeoPixel strip(LED,PinLed,NEO_GRB + NEO_KHZ800);
 
 RTC_DS3231 rtc;
+
 
 long numbers[] = { 
 //  7654321
@@ -75,21 +55,19 @@ void setup() {
      rtc.begin();
      rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
      strip.begin();
-     strip.setBrightness(150);
+     strip.setBrightness(brightnes);
+    
      updateClock();
      strip.show();
 }
 
 void loop() {
-
- if(ValueDisplayD==1){
   strip.setBrightness(brightnes);
-  ShowClock((valueModeColor == 1)? Wheel((hue+pixelColor) & 255) : strip.Color( r, g, b));
-  //displayDots(strip.Color(rD, gD, bD));
-}
+  ShowClock(Wheel(hue+pixelColor) & 255);
+  displayDots(strip.Color(255, 0, 0));
 
-    strip.show();
- //   timer.run();
+  strip.show();
+   
 }
 
 void DisplayShow(byte number, byte segment, uint32_t color) {
@@ -139,9 +117,42 @@ void ShowClock(uint32_t color){
   DisplayShow(mr,0,color);
 }
 
+void displayDots(uint32_t color) {
+  unsigned long tmr = millis();
+  if(tmr - tmrsave > Delay){
+    tmrsave = tmr;
+  if (dotsOn) {
+    for(int i = 70; i <= 77; i++){
+      strip.setPixelColor(i , color);
+    }
 
+  } else {
+    for(int i = 70; i <= 77; i++){
+      strip.setPixelColor(i , strip.Color(0,0,0));
+    }
+  }
+  dotsOn = !dotsOn;  
+}
+strip.show();
+}
 
+void timerHue(){
+  unsigned long tmr = millis();
+  if(tmr - tmrsaveHue > delayHue){
+    tmrsaveHue = tmr;
+  if(pixelColor <256){
+    pixelColor++;
+    if(pixelColor==255){
+      pixelColor=0;
+    }
+  }
+}
 
+  for(int hue=0; hue<strip.numPixels(); hue++) {
+    hue++;
+      
+    }
+}
 
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
